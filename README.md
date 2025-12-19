@@ -94,7 +94,6 @@ The API Key used by Terraform requires the following scopes:
 |------|-------------|
 | <a name="output_generated_ssh_private_key"></a> [generated\_ssh\_private\_key](#output\_generated\_ssh\_private\_key) | The generated SSH private key if create\_ssh\_key is true. SENSITIVE. |
 | <a name="output_runner_ids"></a> [runner\_ids](#output\_runner\_ids) | The IDs of the created runner instances. |
-| <a name="output_runner_ipv4"></a> [runner\_ipv4](#output\_runner\_ipv4) | The public IPv4 addresses of the created runner instances. |
 | <a name="output_runner_names"></a> [runner\_names](#output\_runner\_names) | The names of the created runner instances. |
 | <a name="output_runner_public_ips"></a> [runner\_public\_ips](#output\_runner\_public\_ips) | The public IP addresses of the runners. |
 <!-- END_TF_DOCS -->

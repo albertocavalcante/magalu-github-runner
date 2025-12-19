@@ -18,5 +18,3 @@ output "generated_ssh_private_key" {
   value       = var.create_ssh_key && var.ssh_key_name == null ? tls_private_key.ssh[0].private_key_pem : null
   sensitive   = true
 }
-
-
