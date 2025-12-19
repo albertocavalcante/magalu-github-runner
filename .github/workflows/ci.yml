@@ -44,7 +44,7 @@ jobs:
 
       # --- Setup Toolchain ---
       - name: Setup Go (for Lefthook)
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.x
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
         with:
           go-version: '1.21'
           cache: false # No go.sum usually
@@ -55,12 +55,12 @@ jobs:
           terraform_version: 1.5.7
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@19a52fbac37dac669e2467ee527595bb9d4090d4 # v4.1.0
+        uses: terraform-linters/setup-tflint@8093687ecc9dcbfa88d07c103ad4176739a7287e # v4.1.0
         with:
           tflint_version: latest
 
       - name: Setup Terraform Docs
-        uses: terraform-docs/gh-actions@7a535d4c60952a5a1e2a9b3e9a6a9a95724d2a10 # v1.0.0
+        uses: terraform-docs/gh-actions@f6d59f89a280fa0a3febf55ef68f146784b20ba0 # v1.0.0
 
       # --- Install & Run Checks ---
       - name: Install Lefthook
