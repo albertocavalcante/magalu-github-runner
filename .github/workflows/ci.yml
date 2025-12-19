@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+      - name: Filter Paths
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            terraform:
+              - '**/*.tf'
+              - '**/*.tfvars'
+              - '.terraform.lock.hcl'
+              - '.tflint.hcl'
+              - '.terraform-docs.yml'
+              - 'lefthook.yml'
+
+  quality-check:
+    name: Code Quality
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # --- Setup Toolchain ---
+      - name: Setup Go (for Lefthook)
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.x
+        with:
+          go-version: '1.21'
+          cache: false # No go.sum usually
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
+        with:
+          terraform_version: 1.5.7
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@19a52fbac37dac669e2467ee527595bb9d4090d4 # v4.1.0
+        with:
+          tflint_version: latest
+
+      - name: Setup Terraform Docs
+        uses: terraform-docs/gh-actions@7a535d4c60952a5a1e2a9b3e9a6a9a95724d2a10 # v1.0.0
+
+      # --- Install & Run Checks ---
+      - name: Install Lefthook
+        run: go install github.com/evilmartians/lefthook@latest
+
+      - name: Run Lefthook
+        run: lefthook run pre-commit --force
