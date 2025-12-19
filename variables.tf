@@ -57,9 +57,15 @@ variable "runner_labels" {
 }
 
 variable "ssh_key_name" {
-  description = "The name of a pre-existing SSH key in Magalu Cloud to attach to the runner VMs for debugging access. Optional."
+  description = "The name of a pre-existing SSH key in Magalu Cloud to attach to the runner VMs. If not provided and 'create_ssh_key' is true, a new key will be generated."
   type        = string
   default     = null
+}
+
+variable "create_ssh_key" {
+  description = "If true, generates a new SSH key pair when 'ssh_key_name' is not provided. The private key will be outputted."
+  type        = bool
+  default     = true
 }
 
 variable "availability_zone" {

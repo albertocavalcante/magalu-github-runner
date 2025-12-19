@@ -12,6 +12,22 @@ resource "random_id" "runner_id" {
   prefix      = "${var.runner_name_prefix}-"
 }
 
+# ---------------------------------------------------------------------------------------------------------------------
+# SSH KEY GENERATION (OPTIONAL)
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "tls_private_key" "ssh" {
+  count     = var.ssh_key_name == null && var.create_ssh_key ? 1 : 0
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "mgc_ssh_keys" "ssh" {
+  count = var.ssh_key_name == null && var.create_ssh_key ? 1 : 0
+  name  = "${var.runner_name_prefix}-ssh-key-${random_id.runner_id[0].hex}"
+  key   = tls_private_key.ssh[0].public_key_openssh
+}
+
 # Provisions the Virtual Machine instances.
 resource "mgc_virtual_machine_instances" "runner" {
   count = var.runner_count
@@ -21,7 +37,7 @@ resource "mgc_virtual_machine_instances" "runner" {
   image             = var.image
   availability_zone = var.availability_zone
 
-  ssh_key_name = var.ssh_key_name
+  ssh_key_name = var.ssh_key_name != null ? var.ssh_key_name : (var.create_ssh_key ? mgc_ssh_keys.ssh[0].name : null)
 
   # Allocate a public IP to ensure the runner can communicate outbound to GitHub APIs.
   allocate_public_ipv4 = true
