@@ -18,3 +18,8 @@ output "generated_ssh_private_key" {
   value       = var.create_ssh_key && var.ssh_key_name == null ? tls_private_key.ssh[0].private_key_pem : null
   sensitive   = true
 }
+
+output "runner_ipv4" {
+  description = "The public IPv4 addresses of the created runner instances."
+  value       = mgc_virtual_machine_instances.runner[*].network_interfaces[0].ipv4
+}

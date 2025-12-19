@@ -32,6 +32,18 @@ module "gh_runner" {
 - Terraform >= 1.0
 - `magalucloud/mgc` provider
 
+### API Key Scopes
+The API Key used by Terraform requires the following scopes:
+
+| Permission | Description |
+|------------|-------------|
+| `virtual-machine.read` | Read access to Virtual Machines |
+| `virtual-machine.write` | Create/Delete Virtual Machines |
+| `network.read` | Read access to Networks/VPCs |
+| `network.write` | Attach machines to networks |
+| `gdb:ssh-pkey-r` | Read SSH Keys |
+| `gdb:ssh-pkey-w` | Create SSH Keys |
+
 ## Inputs
 
 <!-- BEGIN_TF_DOCS -->
@@ -82,6 +94,7 @@ module "gh_runner" {
 |------|-------------|
 | <a name="output_generated_ssh_private_key"></a> [generated\_ssh\_private\_key](#output\_generated\_ssh\_private\_key) | The generated SSH private key if create\_ssh\_key is true. SENSITIVE. |
 | <a name="output_runner_ids"></a> [runner\_ids](#output\_runner\_ids) | The IDs of the created runner instances. |
+| <a name="output_runner_ipv4"></a> [runner\_ipv4](#output\_runner\_ipv4) | The public IPv4 addresses of the created runner instances. |
 | <a name="output_runner_names"></a> [runner\_names](#output\_runner\_names) | The names of the created runner instances. |
 | <a name="output_runner_public_ips"></a> [runner\_public\_ips](#output\_runner\_public\_ips) | The public IP addresses of the runners. |
 <!-- END_TF_DOCS -->
