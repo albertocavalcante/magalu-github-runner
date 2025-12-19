@@ -5,7 +5,7 @@ output "runner_names" {
 
 output "runner_public_ips" {
   description = "The public IP addresses of the runners."
-  value       = mgc_virtual_machine_instances.runner[*].network_interface[0].public_ip
+  value       = mgc_virtual_machine_instances.runner[*].ipv4
 }
 
 output "runner_ids" {
