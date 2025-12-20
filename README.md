@@ -100,6 +100,10 @@ The API Key used by Terraform requires the following scopes:
 | <a name="output_runner_public_ips"></a> [runner\_public\_ips](#output\_runner\_public\_ips) | The public IP addresses of the runners. |
 <!-- END_TF_DOCS -->
 
+## Troubleshooting
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for SSH debugging commands, known issues, and diagnostic tactics.
+
 ## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for future plans.

@@ -24,7 +24,7 @@ detect_admin_user() {
             break
         fi
     done
-    
+
     # Fallback to 'ubuntu' if detection fails but 'ubuntu' exists in passwd
     if [ -z "$ADMIN_USER" ] && id -u ubuntu &>/dev/null; then
         ADMIN_USER="ubuntu"
@@ -61,12 +61,12 @@ install_docker() {
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
             chmod a+r /etc/apt/keyrings/docker.gpg
         fi
-        
+
         echo \
           "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
           $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
           tee /etc/apt/sources.list.d/docker.list > /dev/null
-        
+
         apt-get update -y
         apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     elif command -v yum &> /dev/null || command -v dnf &> /dev/null; then
@@ -81,7 +81,14 @@ create_runner_user() {
     if ! id -u "$RUNNER_USER" >/dev/null 2>&1; then
         log "Creating user $RUNNER_USER..."
         useradd -m -s /bin/bash "$RUNNER_USER"
-        usermod -aG sudo "$RUNNER_USER"
+        # Use 'wheel' for RHEL-based distros, 'sudo' for Debian-based
+        if getent group wheel > /dev/null; then
+            usermod -aG wheel "$RUNNER_USER"
+        elif getent group sudo > /dev/null; then
+            usermod -aG sudo "$RUNNER_USER"
+        else
+            log "WARNING: No sudo/wheel group found, user may not have sudo access"
+        fi
         echo "$RUNNER_USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     fi
 }
@@ -90,7 +97,7 @@ configure_docker_permissions() {
     log "Configuring Docker permissions..."
     # Add runner user to docker group
     usermod -aG docker "$RUNNER_USER"
-    
+
     # Add admin user to docker group for debugging convenience
     if [ -n "$ADMIN_USER" ]; then
         log "Adding admin user '$ADMIN_USER' to docker group..."
@@ -105,7 +112,7 @@ download_runner() {
 
     # Try to fetch latest version tag
     LATEST_VERSION=$(curl -s -H "Authorization: token $GITHUB_PAT" https://api.github.com/repos/actions/runner/releases/latest | jq -r .tag_name | sed 's/v//')
-    
+
     if [ -n "$LATEST_VERSION" ] && [ "$LATEST_VERSION" != "null" ]; then
         VERSION="$LATEST_VERSION"
         log "Resolved latest runner version: $VERSION"
@@ -137,7 +144,7 @@ download_runner() {
 get_registration_token() {
     local repo_path=$(echo "$GITHUB_REPO_URL" | sed 's/https:\/\/github.com\///')
     local api_url="https://api.github.com/repos/$repo_path/actions/runners/registration-token"
-    
+
     log "Requesting registration token for $repo_path..."
     REG_TOKEN=$(curl -s -X POST -H "Authorization: token $GITHUB_PAT" -H "Accept: application/vnd.github.v3+json" "$api_url" | jq -r .token)
 
@@ -151,7 +158,7 @@ get_registration_token() {
 install_and_start_service() {
     log "Configuring and starting runner service..."
     cd "$RUNNER_DIR"
-    
+
     sudo -u "$RUNNER_USER" ./config.sh --url "$GITHUB_REPO_URL" --token "$REG_TOKEN" --name "$RUNNER_NAME" --labels "$RUNNER_LABELS" --unattended --replace
 
     ./svc.sh install "$RUNNER_USER"
