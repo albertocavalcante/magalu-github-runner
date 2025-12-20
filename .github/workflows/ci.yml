@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
+
       - name: Filter Paths
         id: filter
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
@@ -37,34 +37,34 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.terraform == 'true'
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       # --- Setup Toolchain ---
-      - name: Setup Go (for Lefthook)
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
-        with:
-          go-version: '1.21'
-          cache: false # No go.sum usually
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
         with:
-          terraform_version: 1.5.7
+          terraform_version: 1.11.0
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@8093687ecc9dcbfa88d07c103ad4176739a7287e # v4.1.0
         with:
           tflint_version: latest
 
-      - name: Setup Terraform Docs
-        uses: terraform-docs/gh-actions@f6d59f89a280fa0a3febf55ef68f146784b20ba0 # v1.0.0
+      # --- Run Checks ---
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
 
-      # --- Install & Run Checks ---
-      - name: Install Lefthook
-        run: go install github.com/evilmartians/lefthook@latest
+      - name: Terraform Init
+        run: terraform init -backend=false
 
-      - name: Run Lefthook
-        run: lefthook run pre-commit --force
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: TFLint
+        run: tflint --config=.tflint.hcl
+
+      - name: ShellCheck
+        run: shellcheck templates/*.tftpl
