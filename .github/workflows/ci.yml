@@ -43,12 +43,6 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       # --- Setup Toolchain ---
-      - name: Setup Go (for Lefthook)
-        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
-        with:
-          go-version: '1.21'
-          cache: false # No go.sum usually
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
         with:
@@ -59,15 +53,18 @@ jobs:
         with:
           tflint_version: latest
 
-      - name: Setup Terraform Docs
-        uses: terraform-docs/gh-actions@f6d59f89a280fa0a3febf55ef68f146784b20ba0 # v1.0.0
+      # --- Run Checks ---
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
 
-      # --- Install & Run Checks ---
-      - name: Install Lefthook
-        run: go install github.com/evilmartians/lefthook@latest
+      - name: Terraform Init
+        run: terraform init -backend=false
 
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Terraform Validate
+        run: terraform validate
 
-      - name: Run Lefthook
-        run: lefthook run pre-commit --force
+      - name: TFLint
+        run: tflint --config=.tflint.hcl
+
+      - name: ShellCheck
+        run: shellcheck templates/*.tftpl
