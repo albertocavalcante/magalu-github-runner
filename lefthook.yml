@@ -5,17 +5,21 @@ pre-commit:
   parallel: true
   commands:
     terraform-fmt:
-      glob: "*.{tf,tfvars}"
+      glob: '*.{tf,tfvars}'
       run: terraform fmt -recursive -check
-    
+
     terraform-validate:
-      glob: "*.{tf,tfvars}"
+      glob: '*.{tf,tfvars}'
       run: terraform validate
 
     tflint:
-      glob: "*.{tf,tfvars}"
+      glob: '*.{tf,tfvars}'
       run: tflint --config=.tflint.hcl
 
     terraform-docs:
-      glob: "*.{tf,tfvars}"
+      glob: '*.{tf,tfvars}'
       run: terraform-docs markdown table --output-file README.md --output-mode inject .
+
+    shellcheck:
+      glob: 'templates/*.tftpl'
+      run: shellcheck {staged_files}
