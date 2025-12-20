@@ -36,12 +36,30 @@ variable "machine_type" {
   description = "The Magalu Cloud machine type (flavor) for the runner instances. Defaults to 'BV1-1-40'."
   type        = string
   default     = "BV1-1-40"
+
+  validation {
+    condition     = can(regex("^(BV|cloud-bs)[0-9]", var.machine_type))
+    error_message = "Machine type must start with 'BV' or 'cloud-bs' followed by specifications (e.g., BV1-1-40, BV4-16-10)."
+  }
 }
 
 variable "image" {
-  description = "The operating system image name. The included startup script supports Ubuntu, Debian, Rocky Linux, and AlmaLinux."
+  description = "The operating system image name. The included startup script supports Ubuntu, Debian, Rocky Linux, and Oracle Linux."
   type        = string
   default     = "cloud-ubuntu-22.04 LTS"
+
+  validation {
+    condition = contains([
+      "cloud-ubuntu-22.04 LTS",
+      "cloud-ubuntu-24.04 LTS",
+      "cloud-debian-12 LTS",
+      "cloud-debian-13 LTS",
+      "cloud-rocky-09",
+      "cloud-oraclelinux-8",
+      "cloud-oraclelinux-9",
+    ], var.image)
+    error_message = "Image must be one of: cloud-ubuntu-22.04 LTS, cloud-ubuntu-24.04 LTS, cloud-debian-12 LTS, cloud-debian-13 LTS, cloud-rocky-09, cloud-oraclelinux-8, cloud-oraclelinux-9."
+  }
 }
 
 variable "runner_name_prefix" {
@@ -72,4 +90,9 @@ variable "availability_zone" {
   description = "The specific Magalu Cloud Availability Zone to deploy the runners into. If null, the cloud provider automatic selection applies."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.availability_zone == null || can(regex("^br-(se1|ne1)-[a-c]$", var.availability_zone))
+    error_message = "Availability zone must be null or match pattern: br-{region}-{a|b|c} (e.g., br-se1-a, br-ne1-b)."
+  }
 }
