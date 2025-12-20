@@ -141,19 +141,6 @@ download_runner() {
     log "Extracting runner..."
     tar xzf "$RUNNER_FILE"
     chown -R "$RUNNER_USER:$RUNNER_USER" "$RUNNER_DIR"
-
-    # Ensure strict execution permissions
-    chmod +x "$RUNNER_DIR/config.sh" "$RUNNER_DIR/runsvc.sh" "$RUNNER_DIR/bin/Runner.Listener"
-
-    # Restore SELinux contexts for runner files (required on RHEL-based systems like Rocky Linux).
-    # When files are extracted from a tarball into a home directory, they inherit the 'user_home_t'
-    # SELinux type, which prevents systemd from executing them. This results in:
-    #   "Failed to locate executable /home/github-runner/actions-runner/runsvc.sh: Permission denied"
-    # We use 'chcon' to strictly set the 'bin_t' context, which allows execution.
-    if command -v chcon &> /dev/null; then
-        log "Setting SELinux context 'bin_t' for runner executables..."
-        chcon -R -t bin_t "$RUNNER_DIR"
-    fi
 }
 
 get_registration_token() {
@@ -177,14 +164,18 @@ install_and_start_service() {
 
     sudo -u "$RUNNER_USER" ./config.sh --url "$GITHUB_REPO_URL" --token "$REG_TOKEN" --name "$RUNNER_NAME" --labels "$RUNNER_LABELS" --unattended --replace
 
-    # Pre-flight check: Ensure runsvc.sh is executable
-    if [ ! -x "./runsvc.sh" ]; then
-        log "ERROR: runsvc.sh is not executable! Checking context..."
-        ls -lZ ./runsvc.sh
-        exit 1
+    ./svc.sh install "$RUNNER_USER"
+
+    # Fix permissions and SELinux context AFTER service installation
+    # runsvc.sh and svc.sh are generated/symlinked during config/install
+    log "Applying security hardening and SELinux fixes..."
+    chmod +x "$RUNNER_DIR/runsvc.sh" "$RUNNER_DIR/svc.sh"
+
+    if command -v chcon &> /dev/null; then
+        log "Setting SELinux context 'bin_t' for runner executables..."
+        chcon -R -t bin_t "$RUNNER_DIR"
     fi
 
-    ./svc.sh install "$RUNNER_USER"
     ./svc.sh start
 }
 
