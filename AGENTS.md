@@ -48,6 +48,14 @@
     <options>List potential solutions.</options>
     <decision>Justify the chosen path.</decision>
   </reasoning_framework>
+
+  <knowledge_base>
+    <troubleshooting>
+      See TROUBLESHOOTING.md for a living document of debugging tactics, SSH commands,
+      and known issues discovered while operating runners. When you discover a new issue
+      and its fix, add it to TROUBLESHOOTING.md to help future debugging efforts.
+    </troubleshooting>
+  </knowledge_base>
 </system_instructions>
 
 <system_reminder>
