@@ -46,6 +46,7 @@ groups github-runner  # Should include: wheel (RHEL) or sudo (Debian), docker
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `usermod: group 'sudo' does not exist` | RHEL-based distros use `wheel` group | Fixed in v0.2.0+ |
+| `status=203/EXEC` / `Permission denied` | SELinux `user_home_t` context blocking systemd | Fixed by `chcon -t bin_t` in startup script |
 | `docker: permission denied` | User not in docker group | Restart VM or destroy/recreate |
 | Runner not appearing in GitHub | Script failed early | Check cloud-init logs for errors |
 | `dnf config-manager: command not found` | Missing `dnf-plugins-core` | Ensure it's in system dependencies |
