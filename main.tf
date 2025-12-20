@@ -39,6 +39,17 @@ resource "mgc_virtual_machine_instances" "runner" {
 
   ssh_key_name = var.ssh_key_name != null ? var.ssh_key_name : (var.create_ssh_key ? mgc_ssh_keys.ssh[0].name : null)
 
+  # WARNING: allocate_public_ipv4 creates IPs that are NOT deleted when the VM is destroyed.
+  # This is documented MGC provider behavior - public IPs remain allocated to your tenant.
+  # Run ./scripts/cleanup-orphans.sh periodically to remove orphaned IPs.
+  #
+  # ARCHITECTURE NOTE: GitHub Actions runners use OUTBOUND-ONLY long-polling to GitHub.
+  # A public IP is NOT required for runner functionality - only for SSH troubleshooting.
+  # The runner polls github.com/actions.githubusercontent.com (HTTPS:443) for jobs.
+  #
+  # TODO: Consider defaulting to false and using NAT gateway for outbound connectivity.
+  # This would eliminate orphaned IP issues entirely. Keep true for now for SSH debugging.
+  #
   # Allocate a public IP to ensure the runner can communicate outbound to GitHub APIs.
   allocate_public_ipv4 = true
 

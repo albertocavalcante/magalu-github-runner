@@ -49,6 +49,42 @@ groups github-runner  # Should include: wheel (RHEL) or sudo (Debian), docker
 | `docker: permission denied` | User not in docker group | Restart VM or destroy/recreate |
 | Runner not appearing in GitHub | Script failed early | Check cloud-init logs for errors |
 | `dnf config-manager: command not found` | Missing `dnf-plugins-core` | Ensure it's in system dependencies |
+| No available public IP addresses | Orphaned IPs exhausting quota | Run cleanup script (see below) |
+
+## Resource Quota Exhaustion
+
+### Symptom
+
+```
+Error: No available public IP addresses for allocation or network-interface in your account
+```
+
+### Root Cause
+
+The MGC provider **does not delete public IPs** when VMs are destroyed. This is documented behavior:
+
+> "A Public IPv4 address resource will be created and associated with your tenant, when deleting the instance the Public IPv4 will not be deleted and charges may apply."
+
+This causes orphaned IPs to accumulate, eventually exhausting your account quota.
+
+### Fix
+
+Use the cleanup script to remove orphaned resources:
+
+```bash
+# Dry run first (shows what would be deleted)
+./scripts/cleanup-orphans.sh --region br-ne1 --dry-run
+
+# Actually delete orphaned public IPs
+./scripts/cleanup-orphans.sh --region br-ne1 --execute
+
+# Also clean SSH keys and VMs (be careful!)
+./scripts/cleanup-orphans.sh --region br-ne1 --execute --ssh-keys --vms
+```
+
+### Prevention
+
+Consider running the cleanup script periodically, or as part of your CI teardown process.
 
 ## Deep Dive: Investigating Script Failures
 
