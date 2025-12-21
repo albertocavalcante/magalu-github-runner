@@ -108,6 +108,79 @@ sudo ls -la /home/github-runner/actions-runner/
 sudo journalctl -u 'actions.runner.*' --no-pager
 ```
 
+
+## Diagnosing Runtime Crashes (Job Killed)
+
+If a job starts but suddenly stops or the runner service dies:
+
+1. **Check for Out-Of-Memory (OOM) Kills**:
+   This is the most common cause for "Killed" messages.
+   ```bash
+   sudo dmesg | grep -i "kill"
+   # OR
+   sudo grep -i "Out of memory" /var/log/messages
+   ```
+
+2. **Runner Application Logs**:
+   The runner logs detailed execution info to the `_diag` folder.
+   ```bash
+   # List logs by time
+   sudo ls -ltr /home/github-runner/actions-runner/_diag/
+   
+   # View the latest Worker log (handles the job execution)
+   sudo tail -f /home/github-runner/actions-runner/_diag/Worker_*.log
+   
+   # View the latest Runner log (handles network/connection)
+   sudo tail -f /home/github-runner/actions-runner/_diag/Runner_*.log
+   ```
+
+3. **Service Status**:
+   ```bash
+   sudo systemctl status actions.runner.*
+   sudo journalctl -u actions.runner.* -n 50 --no-pager
+   ```
+
+## Diagnosing Hung CI Jobs (Timeouts)
+
+If a job runs "forever" until it hits the 6-hour (or custom) timeout, it usually indicates a **process hang** or **thread starvation**, not a runner crash.
+
+### 1. Identify the Failure Reason
+
+Use the GitHub CLI (`gh`) to check the run status.
+```bash
+# View summary of the run
+gh run view <RUN_ID> --repo <OWNER/REPO>
+
+# Example Output:
+# X The action 'Run Unit Tests' has timed out after 20 minutes.
+```
+
+### 2. Retrieve the Logs
+
+**Standard Failed Logs** (`--log-failed`) are often insufficient because they only show the *error* (the timeout message) and miss the *cause* (what happened right before).
+
+**Method: Get Full Job Logs**
+1.  Find the Job ID from `gh run view`.
+2.  Download the full log.
+    ```bash
+    gh run view --repo <OWNER/REPO> --job <JOB_ID> --log > job_log.txt
+    ```
+3.  Inspect the end of the log to find the last executing step.
+    ```bash
+    tail -n 100 job_log.txt
+    ```
+
+### 3. Analyze for Deadlocks (Thread Starvation)
+
+If the log stops abruptly in the middle of a test suite (e.g., during "Concurrent Tests"):
+
+*   **Symptom**: The runner is active (heartbeat ok), but the job is stuck.
+*   **Cause**: On small runners (`BV1-1-40` with 1 vCPU), using `Dispatchers.Default` (Kotlin) or `ForkJoinPool` (Java) provides very few threads (often 1 or 2).
+*   **Mechanism**: If your tests launch multiple blocking tasks (coroutines calling `.get()` or `await`), they can consume all available threads. If the task they are waiting for *also* needs a thread to run, you get a **deadlock**.
+*   **Fix**:
+    *   **Upgrade Runner**: Use a machine with 2+ vCPUs to increase the thread pool size.
+    *   **Refactor Code**: Avoid blocking calls inside common pools; use `Dispatchers.IO` or true non-blocking suspension.
+
 ## Contributing
 
 When you discover a new issue and its fix, please add it to this document to help future troubleshooting efforts.
